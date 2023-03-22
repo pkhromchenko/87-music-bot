@@ -2,6 +2,11 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
+import yt_dlp
+import logging
+
+logger = logging.getLogger('my_bot')
+
 
 # Create a Discord Intents object that enables all events to be received
 intents = discord.Intents.all()
@@ -13,12 +18,20 @@ bot = commands.Bot(command_prefix='.', intents=intents)
 async def join_voice_channel(ctx):
     # Check if the user is in a voice channel
     if not ctx.message.author.voice:
-        await ctx.send("You're not in a channel idiota")
+        await ctx.send("You're not in a voice channel.")
         return False
-    else:
-        channel = ctx.message.author.voice.channel
+    
+    # Get the voice channel object
+    channel = ctx.message.author.voice.channel
+    
     # Connect to the voice channel
-    await channel.connect()
+    try:
+        await channel.connect()
+        #Prints exception if failed to connect
+    except Exception as e:
+        await ctx.send(f"Failed to connect to voice channel: {e}")
+        return False
+    
     return True
 
 # Play Function
@@ -50,15 +63,19 @@ async def play_song(ctx, url):
         return
     # Download the song from YouTube
     await ctx.send("Downloading song...")
-    os.system(f"youtube-dl --extract-audio --audio-format mp3 -o 'songs/song.%(ext)s' {url}")
-    # Rename the downloaded file to "song.mp3"
-    for file in os.listdir("./"):
-        if file.endswith(".mp3"):
-            os.rename(file, "songs/song.mp3")
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': 'songs/song.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192'
+        }]
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
     # Play the song
-    # Update voice to current channel 
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-    # Checks if voice value is empty
     if voice is None:
         await ctx.send("I am not currently connected to a voice channel.")
         return
