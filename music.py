@@ -9,7 +9,7 @@ intents = discord.Intents.all()
 # Create a new Bot instance with command prefix "." and intents
 bot = commands.Bot(command_prefix='.', intents=intents)
 
-# vc join Functiom
+# vc join Function
 async def join_voice_channel(ctx):
     # Check if the user is in a voice channel
     if not ctx.message.author.voice:
@@ -56,6 +56,9 @@ async def play_song(ctx, url):
         if file.endswith(".mp3"):
             os.rename(file, "songs/song.mp3")
     # Play the song
+    # Update voice to current channel 
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    # Checks if voice value is empty
     if voice is None:
         await ctx.send("I am not currently connected to a voice channel.")
         return
