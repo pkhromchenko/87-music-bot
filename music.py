@@ -116,17 +116,17 @@ async def play_next(ctx):
     try:
         # Play the next song
         voice.play(discord.FFmpegPCMAudio(f"songs/{next_song}.mp3"), after=lambda e: print(f"Error: {e}") if e else None)
-        # Set the volume of the song to 7%
+        # Set the volume of the song to 10%
         voice.source = discord.PCMVolumeTransformer(voice.source)
-        voice.source.volume = 0.07
+        voice.source.volume = 0.1
         # Send a message to the user indicating that the next song is playing
-        await ctx.send(f"*Now playing: `{next_song}` 🎵*")
+        await ctx.send(f"*Now playing: `{next_song}`*")
     except:
         # If there was an error playing the next song, send a message to the user
-        await ctx.send("*Failed to play next song*")
+        await ctx.send("*The queue is now empty*")
     else:
         # If queue is empty
-        # Wait 60s before disconnecting
+        # Wait 600s before disconnecting
         await asyncio.sleep(600)
         # Check if queue is still empty, if so, disconnect
         if not queue:
@@ -142,7 +142,7 @@ async def play(ctx, *, query_or_url):
         await play_song(ctx, query_or_url)
     else:
         # If it's not a URL, assume it's a search query
-        await ctx.send(f"*Searching for `{query_or_url}` on YouTube...*")
+        # await ctx.send(f"*Searching for `{query_or_url}` on YouTube...*")
 
         # Use yt_dlp to search for videos matching the query
         with yt_dlp.YoutubeDL() as ydl:
@@ -152,15 +152,13 @@ async def play(ctx, *, query_or_url):
                 url = info['webpage_url']
 
                 # Send a message to the user indicating the found video
-                await ctx.send(f"*Found `{info['title']}`*")
+                # await ctx.send(f"*Found `{info['title']}`*")
 
                 # Call the play_song function with the found video URL
                 await play_song(ctx, url)
             except:
                 # If there was an error searching for videos or extracting information, send a message to the user
-                await ctx.send("*Failed to find a video matching the search query.*")
-
-
+                await ctx.send("*There was an error searching for videos (or extracting info).*")
 
 # Skip command
 @bot.command()
@@ -182,5 +180,4 @@ async def stop(ctx):
     # Disconnect from the voice channel
     await voice.disconnect()
 
-    
 bot.run('BOT_TOKEN')
