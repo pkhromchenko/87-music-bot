@@ -87,51 +87,54 @@ async def play_song(ctx, url):
             ydl.download([url])
 
     # Add the downloaded song to the queue
-    queue.append(title)
+    if voice.is_playing():
+        queue.append(title)
+        position = len(queue)
+        await ctx.send(f"*Enqueued `{title}` in position `{position}`*")
+    else:
+        queue.append(title)
+        position = 0
 
     # If there is no song playing, start playing the queued songs
     if not voice.is_playing():
         await play_next(ctx)
-
-    # Send a message to the user indicating that the song has been added to the queue
-    await ctx.send(f"*Enqueued `{title}` in position `{len(queue)}`*")
-
 
 # Initialize queue array
 queue = []
 
 # Play next song function
 async def play_next(ctx):
+    # Get the bot's voice client for where the command was invoked
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+
     # Check if queue is empty
-    if queue:
-        # Get first song
-        next_song = queue[0]
-        # Remove first song before playing it
-        queue.pop(0)
-
-        # Get the bot's voice client for where the command was invoked
-        voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-
-        # Play the next song
-    try:
-        # Play the next song
-        voice.play(discord.FFmpegPCMAudio(f"songs/{next_song}.mp3"), after=lambda e: print(f"Error: {e}") if e else None)
-        # Set the volume of the song to 10%
-        voice.source = discord.PCMVolumeTransformer(voice.source)
-        voice.source.volume = 0.1
-        # Send a message to the user indicating that the next song is playing
-        await ctx.send(f"*Now playing: `{next_song}`*")
-    except:
-        # If there was an error playing the next song, send a message to the user
-        await ctx.send("*The queue is now empty*")
-    else:
-        # If queue is empty
+    if not queue:
         # Wait 600s before disconnecting
         await asyncio.sleep(600)
         # Check if queue is still empty, if so, disconnect
         if not queue:
-            voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
             await voice.disconnect()
+            return
+
+    # Get first song
+    next_song = queue.pop(0)
+
+    # Play the next song
+    try:
+        # Play the next song
+        voice.play(discord.FFmpegPCMAudio(f"songs/{next_song}.mp3"), after=lambda e: print(f"Error: {e}") if e else None)
+        # Set the volume of the song to 15%
+        voice.source = discord.PCMVolumeTransformer(voice.source)
+        voice.source.volume = 0.15
+        # Send a message to the user indicating that the next song is playing
+        # Create an embedded message with information about the current song
+        embed = discord.Embed(title="Now Playing", description=f"{next_song}", color=discord.Color.blue())
+        await ctx.send(embed=embed)
+    except:
+        # If there was an error playing the next song, send a message to the user
+        await ctx.send("*The queue is now empty*")
+    return
+
 
 # Play command
 @bot.command(aliases=['p'])
@@ -179,5 +182,26 @@ async def stop(ctx):
     voice.stop()
     # Disconnect from the voice channel
     await voice.disconnect()
+    
+@bot.command(aliases=['queue'])
+async def q(ctx):
+    # Check if queue is empty
+    if not queue:
+        # Create an embed with a title and description indicating that the queue is empty
+        embed = discord.Embed(title="Current Song Queue", description="The queue is currently empty", color=discord.Color.blue())
+        await ctx.send(embed=embed)
+        return
 
+    # Create a list of strings containing the current song queue using tuples
+    queue_list = [f"{i+1}. {song}" for i, song in enumerate(queue)]
+
+    # Create a string containing the list of songs separated by line breaks
+    queue_string = "\n".join(queue_list)
+
+    # Create an embed with a title and description containing the current song queue
+    embed = discord.Embed(title="Current Song Queue", description=queue_string, color=discord.Color.blue())
+
+    # Send the embed to the user
+    await ctx.send(embed=embed)
+    
 bot.run('BOT_TOKEN')
