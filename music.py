@@ -17,7 +17,7 @@ bot = commands.Bot(command_prefix='.', intents=intents)
 async def join_voice_channel(ctx):
     # Check if the user is in a voice channel
     if not ctx.message.author.voice:
-        await ctx.send("You're not in a voice channel.")
+        await ctx.send("*You're not in a voice channel*")
         return False
 
     # Get the voice channel object
@@ -28,7 +28,7 @@ async def join_voice_channel(ctx):
         voice_client = await channel.connect()
         #Prints exception if failed to connect
     except Exception as e:
-        await ctx.send(f"Failed to connect to voice channel: {e}")
+        await ctx.send(f"*Failed to connect to voice channel: {e}*")
         return False
 
     return True
@@ -58,12 +58,12 @@ async def play_song(ctx, url):
 
         # If voice is None, the bot failed to join a voice channel
         if voice is None:
-            await ctx.send("Failed to join a voice channel.")
+            await ctx.send("*Failed to join a voice channel*")
             return
 
     except:
         # If there was an error joining the voice channel, send a message to the user
-        await ctx.send("Failed to join the voice channel.")
+        await ctx.send("*Failed to join the voice channel*")
         return
 
     # Download the song from YouTube
@@ -97,7 +97,6 @@ async def play_song(ctx, url):
     await ctx.send(f"*Enqueued `{title}` in position `{len(queue)}`*")
 
 
-
 # Initialize queue array
 queue = []
 
@@ -124,11 +123,11 @@ async def play_next(ctx):
         await ctx.send(f"*Now playing: `{next_song}` 🎵*")
     except:
         # If there was an error playing the next song, send a message to the user
-        await ctx.send("Failed to play next song.")
+        await ctx.send("*Failed to play next song*")
     else:
         # If queue is empty
         # Wait 60s before disconnecting
-        await asyncio.sleep(60)
+        await asyncio.sleep(600)
         # Check if queue is still empty, if so, disconnect
         if not queue:
             voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -136,9 +135,32 @@ async def play_next(ctx):
 
 # Play command
 @bot.command(aliases=['p'])
-async def play(ctx, url):
-    # Add URL to queue
-    await play_song(ctx, url)
+async def play(ctx, *, query_or_url):
+    # Check if the argument is a valid YouTube URL
+    if "youtube.com/watch?v=" in query_or_url or "youtu.be/" in query_or_url:
+        # If it's a valid URL, call the play_song function
+        await play_song(ctx, query_or_url)
+    else:
+        # If it's not a URL, assume it's a search query
+        await ctx.send(f"Searching for `{query_or_url}` on YouTube...")
+
+        # Use yt_dlp to search for videos matching the query
+        with yt_dlp.YoutubeDL() as ydl:
+            try:
+                # Search YouTube for the best match
+                info = ydl.extract_info(f"ytsearch:{query_or_url}", download=False)['entries'][0]
+                url = info['webpage_url']
+
+                # Send a message to the user indicating the found video
+                await ctx.send(f"Found `{info['title']}` ({url})")
+
+                # Call the play_song function with the found video URL
+                await play_song(ctx, url)
+            except:
+                # If there was an error searching for videos or extracting information, send a message to the user
+                await ctx.send("Failed to find a video matching the search query.")
+
+
 
 # Skip command
 @bot.command()
@@ -159,5 +181,6 @@ async def stop(ctx):
     voice.stop()
     # Disconnect from the voice channel
     await voice.disconnect()
+
     
-bot.run('TOKEN')
+bot.run('BOT_TOKEN')
