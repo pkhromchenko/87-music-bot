@@ -139,4 +139,4 @@ async def stop(ctx):
     # Disconnect from the voice channel
     await voice.disconnect()
 
-bot.run('BOT_TOKEN')
+bot.run('TOKEN')
