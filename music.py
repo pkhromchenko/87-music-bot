@@ -26,7 +26,7 @@ async def join_voice_channel(ctx):
     
     # Connect to the voice channel
     try:
-        await channel.connect()
+        voice_client = await channel.connect()
         #Prints exception if failed to connect
     except Exception as e:
         await ctx.send(f"Failed to connect to voice channel: {e}")
@@ -65,7 +65,7 @@ async def play_song(ctx, url):
     await ctx.send("Downloading song...")
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': 'songs/song.%(ext)s',
+        'outtmpl': 'songs/%(title)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -73,20 +73,19 @@ async def play_song(ctx, url):
         }]
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        info_dict = ydl.extract_info(url, download=True)
+        title = info_dict.get('title', 'song')
     # Play the song
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice is None:
         await ctx.send("I am not currently connected to a voice channel.")
         return
-    voice.play(discord.FFmpegPCMAudio("songs/song.mp3"), after=lambda e: print(f"Error: {e}") if e else None)
+    voice.play(discord.FFmpegPCMAudio(f"songs/{title}.mp3"), after=lambda e: print(f"Error: {e}") if e else None)
     # Set the volume of the song to 7%
     voice.source = discord.PCMVolumeTransformer(voice.source)
     voice.source.volume = 0.07
-    # Get the name of the song without the file extension
-    nname = os.path.splitext(os.path.basename("songs/song.mp3"))[0]
     # Send a message to the user indicating that the song is now playing
-    await ctx.send(f"Now playing: {nname}")
+    await ctx.send(f"Now playing: {title}")
 
 # Play command
 @bot.command()
@@ -106,4 +105,4 @@ async def stop(ctx):
     # Disconnect from the voice channel
     await voice.disconnect()
 
-bot.run('BOT_TOKEN')
+bot.run('TOKEN')
