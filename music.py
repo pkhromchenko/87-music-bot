@@ -67,7 +67,7 @@ async def play_song(ctx, url):
         return
 
     # Download the song from YouTube
-    await ctx.send("*Downloading song files...*")
+    # await ctx.send("*Downloading song files...*")
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': 'songs/%(title)s.%(ext)s',
@@ -142,7 +142,7 @@ async def play(ctx, *, query_or_url):
         await play_song(ctx, query_or_url)
     else:
         # If it's not a URL, assume it's a search query
-        await ctx.send(f"Searching for `{query_or_url}` on YouTube...")
+        await ctx.send(f"*Searching for `{query_or_url}` on YouTube...*")
 
         # Use yt_dlp to search for videos matching the query
         with yt_dlp.YoutubeDL() as ydl:
@@ -152,13 +152,13 @@ async def play(ctx, *, query_or_url):
                 url = info['webpage_url']
 
                 # Send a message to the user indicating the found video
-                await ctx.send(f"Found `{info['title']}` ({url})")
+                await ctx.send(f"*Found `{info['title']}`*")
 
                 # Call the play_song function with the found video URL
                 await play_song(ctx, url)
             except:
                 # If there was an error searching for videos or extracting information, send a message to the user
-                await ctx.send("Failed to find a video matching the search query.")
+                await ctx.send("*Failed to find a video matching the search query.*")
 
 
 
