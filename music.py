@@ -90,7 +90,10 @@ async def play_song(ctx, url):
     if voice.is_playing():
         queue.append(title)
         position = len(queue)
-        await ctx.send(f"*Enqueued `{title}` in position `{position}`*")
+        embed = discord.Embed(title="Added to queue", description=(f"{title} is in position #{position}"), color=discord.Color.blue())
+
+    # Send the embed to the user
+        await ctx.send(embed=embed)
     else:
         queue.append(title)
         position = 0
@@ -102,7 +105,7 @@ async def play_song(ctx, url):
 # Initialize queue array
 queue = []
 
-# Play next song function
+# Play the next song function
 async def play_next(ctx):
     # Get the bot's voice client for where the command was invoked
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -122,7 +125,7 @@ async def play_next(ctx):
     # Play the next song
     try:
         # Play the next song
-        voice.play(discord.FFmpegPCMAudio(f"songs/{next_song}.mp3"), after=lambda e: print(f"Error: {e}") if e else None)
+        voice.play(discord.FFmpegPCMAudio(f"songs/{next_song}.mp3"), after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), bot.loop))
         # Set the volume of the song to 15%
         voice.source = discord.PCMVolumeTransformer(voice.source)
         voice.source.volume = 0.15
@@ -134,6 +137,7 @@ async def play_next(ctx):
         # If there was an error playing the next song, send a message to the user
         await ctx.send("*The queue is now empty*")
     return
+
 
 
 # Play command
@@ -188,7 +192,7 @@ async def q(ctx):
     # Check if queue is empty
     if not queue:
         # Create an embed with a title and description indicating that the queue is empty
-        embed = discord.Embed(title="Current Song Queue", description="The queue is currently empty", color=discord.Color.blue())
+        embed = discord.Embed(title="Queue", description="The queue is currently empty", color=discord.Color.blue())
         await ctx.send(embed=embed)
         return
 
@@ -213,4 +217,4 @@ async def help(ctx):
     # Send the embed to the user
     await ctx.send(embed=embed)
     
-bot.run('BOT_TOKEN')
+bot.run('TOKEN')
