@@ -203,5 +203,14 @@ async def q(ctx):
 
     # Send the embed to the user
     await ctx.send(embed=embed)
+
+bot.remove_command('help')
+@bot.command()
+async def help(ctx):
+    # Add your custom help message here
+    embed = discord.Embed(title="87 Documentation", description="▶️ `.play` Loads your input and adds it to the queue\n ⏭️ `.skip` Skips to next song\n ⏹️ `.stop` Disconnects the bot (currently disabled)\n ⌛ `.queue` Displays the song queue", color=discord.Color.blue())
+
+    # Send the embed to the user
+    await ctx.send(embed=embed)
     
 bot.run('BOT_TOKEN')
